@@ -1,0 +1,16 @@
+# Week 3 Observation
+
+## Task 1
+- The root did not hand me the address because it only knows who runs each TLD. It answered with a delegation (NS records plus glue addresses), and so did the TLD server, so www.korea.ac.kr took 3 questions (root 198.41.0.4 -> kr 210.101.61.1 -> korea.ac.kr 163.152.11.6) where my laptop normally asks its resolver once.
+- www.netflix.com took 10 questions. Steps 1-3 ended in a CNAME to www.prod.ftl.netflix.com, so steps 4-6 walked again from the root; step 6 was a delegation to e.ns.nflxso.net with no glue (additional section empty). My resolver paused and resolved that nameserver's own name with a separate walk (steps 7-9: root -> net TLD -> 45.57.8.1), then asked it the original question (step 10). The glueless delegation cost 3 extra questions. This is where the recursion in a "recursive resolver" comes from.
+- www.microsoft.com may give a different address than dig/nslookup because it ends at an Akamai CDN name (akamaiedge.net) that hands out different replicas per query; the walk itself is the same.
+
+## Task 2
+- In my capture a delegation and an answer are the same DNS response format with different sections filled: packet 2 (delegation) has Answer RRs 0 with 13 NS in authority and 11 glue records in additional, while packet 6 (answer) has the CNAME in the answer section. Packet 12 is a delegation with additional empty, the glueless case from Task 1. The largest response was packet 8, 544 bytes, a root referral stuffed with glue.
+- My rule: third party if the CNAME chain ends in a different last-two-label zone. It got www.wikipedia.org wrong: it ends at dyna.wikimedia.org, a different domain, but the Wikimedia Foundation runs Wikipedia, so it is the site's own infrastructure. The rule also cannot see anycast CDNs without a CNAME, and the "co.uk" in www.bbc.co.uk shows that the last two labels are not always an owner.
+- Steering: 8 of 11 CDN-hosted sites answered differently to a different resolver, but 0 of 11 answered differently on a different network (wifi vs hotspot, system resolver). So the differences follow which resolver I asked, not where I was, and claim (b) is not supported by my data. Some of the 8 are not steering at all: www.github.com and www.microsoft.com changed between resolvers or runs, which looks like rotation of a replica pool. Caveat: if the hotspot kept using the same resolver, the network comparison could not show any difference.
+
+## Task 3
+- The baseline ignores the record's TTL and keeps everything for a fixed 60 s. That causes two separate problems from the same root: correctness (records with TTL < 60 s, like www.microsoft.com at 20 s and www.cnn.com at 30 s, are served after they expire, 266 stale answers) and performance (records with TTL of an hour or a day are thrown away every 60 s and fetched again for nothing).
+- Floor: 275 upstream queries. A correct cache must go upstream whenever a name is asked after its last fetched record expired, because serving it any longer would be stale. Caching exactly until the TTL runs out hits that minimum, so no correct cache can go lower. The number is set by the TTLs and the query pattern, not by the data structure.
+- The worst record for the baseline is www.microsoft.com: it is the most popular name (Zipf rank 1) and has the shortest TTL (20 s), so it produces most of the stale answers.

@@ -62,22 +62,24 @@ class BaselineCache:
     def stats(self):
         return {"entries": len(self.entries)}
 
-
 class YourCache:
-    """Your cache.
+    """TTL을 지키는 캐시.
 
-    Same interface: __init__(upstream), lookup(name, now) -> address, stats().
-    `upstream(name)` costs a network round trip and returns (address, ttl).
-    The TTL is in seconds and it is the authoritative answer's own TTL -
-    the baseline throws it away.
+    기준 캐시는 TTL을 버리고 무조건 60초 보관했다.
+    여기서는 이름별로 '언제까지 유효한지'를 저장하고, 그 전까지만 캐시에서 준다.
     """
 
     def __init__(self, upstream):
         self.upstream = upstream
-        raise NotImplementedError("write your cache")
+        self.entries = {}          # name -> (address, expires_at)
 
     def lookup(self, name, now):
-        raise NotImplementedError("write your cache")
+        hit = self.entries.get(name)
+        if hit and now < hit[1]:   # 아직 유효기간 안이면 캐시에서
+            return hit[0]
+        address, ttl = self.upstream(name)
+        self.entries[name] = (address, now + ttl)
+        return address
 
     def stats(self):
-        return {}
+        return {"entries": len(self.entries)}

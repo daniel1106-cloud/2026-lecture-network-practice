@@ -22,6 +22,7 @@ address each time; the harness compares the *set of authoritative nameservers*
 you ended at for those, not the address.
 """
 import argparse, subprocess, sys
+import dns.flags, dns.message, dns.name, dns.query, dns.rdatatype
 
 # Root servers. Everything starts here; there is no earlier step.
 ROOT_SERVERS = [
@@ -43,36 +44,75 @@ VERIFY_NAMES = [
 
 
 class Resolver:
-    """Your iterative resolver.
+    """Iterative resolver: root -> TLD -> authoritative, never asking anyone to recurse.
 
-    The whole point is that you never ask a server to recurse for you.
-    You ask one server, it says "not mine, ask over there", and you go there.
-
-    Suggested shape - but it is yours to design:
-
-        resolve(name) -> (address, path)
-            address : the A record you ended up with, as a string
-            path    : the servers you asked, in order, so you can show your work
-
-    Things you will hit, in roughly this order:
-
-    1.  A delegation gives you NS *names*, sometimes with glue A records and
-        sometimes without. No glue means you have to resolve that nameserver's
-        name first - which is another walk. Decide what you do there.
-    2.  A server may not answer. Try the next one rather than giving up.
-    3.  CNAMEs. The answer you get back may be a different name than the one
-        you asked for, and you have to start again with that name.
-    4.  Loops. Cap your depth.
-
-    If you shell out to dig, the flag you want is `+norecurse`, so that the
-    server you ask replies with a delegation instead of doing the work:
-
-        dig @198.41.0.4 www.korea.ac.kr +norecurse
+    R1 resolve(name) -> (address, path)
+    R2 every walk starts at ROOT_SERVERS
+    R3 no glue -> resolve the nameserver's own name first (a separate walk)
+    R4 a server that does not answer -> try the next one
+    R5 CNAME -> restart the walk from the root with the new name
+    R6 MAX_STEPS caps the total number of questions, so a bad zone cannot hang us
     """
 
-    def resolve(self, name):
-        raise NotImplementedError(
-            "Implement the iterative walk: root -> TLD -> authoritative")
+    MAX_STEPS = 40      # total questions allowed for one resolve(), glue walks included
+    TIMEOUT = 2         # seconds to wait for one server
+
+    def __init__(self):
+        self.glueless = 0           # how many times a delegation came without glue
+
+    def resolve(self, name, _path=None):
+        path = [] if _path is None else _path
+        qname = dns.name.from_text(name)
+
+        for _ in range(10):                         # at most 10 CNAMEs in a row
+            servers = list(ROOT_SERVERS)            # R2: always start at a root
+            while True:
+                if len(path) >= self.MAX_STEPS:     # R6
+                    raise RuntimeError(f"gave up on {name}: more than {self.MAX_STEPS} steps")
+
+                response, server = self._ask(qname, servers)
+                path.append(server)
+
+                # 1) the answer section has something for us
+                if response.answer:
+                    cname = None
+                    for rrset in response.answer:
+                        if rrset.name == qname and rrset.rdtype == dns.rdatatype.A:
+                            return rrset[0].address, path
+                        if rrset.name == qname and rrset.rdtype == dns.rdatatype.CNAME:
+                            cname = rrset[0].target
+                    if cname is not None:           # R5: start again with the new name
+                        qname = cname
+                        break
+                    raise RuntimeError(f"answer for {qname} has neither A nor CNAME")
+
+                # 2) no answer, but a delegation in the authority section
+                ns_names = [rr.target for rrset in response.authority
+                            if rrset.rdtype == dns.rdatatype.NS for rr in rrset]
+                if not ns_names:
+                    raise RuntimeError(f"{server} gave neither an answer nor a delegation for {qname}")
+
+                glue = [rr.address for rrset in response.additional
+                        if rrset.rdtype == dns.rdatatype.A and rrset.name in ns_names
+                        for rr in rrset]
+                if glue:
+                    servers = glue
+                else:                               # R3: no glue, walk for the NS name first
+                    self.glueless += 1
+                    ns_addr, _ = self.resolve(ns_names[0].to_text(), path)
+                    servers = [ns_addr]
+        raise RuntimeError(f"too many CNAMEs for {name}")
+
+    def _ask(self, qname, servers):
+        """Send one non-recursive query. R4: if a server is silent, try the next."""
+        query = dns.message.make_query(qname, dns.rdatatype.A)
+        query.flags &= ~dns.flags.RD                # do not recurse for me
+        for server in servers:
+            try:
+                return dns.query.udp(query, server, timeout=self.TIMEOUT), server
+            except Exception:
+                continue
+        raise RuntimeError(f"none of {servers} answered for {qname}")
 
 
 # ------------------------------------------------------------------- harness
