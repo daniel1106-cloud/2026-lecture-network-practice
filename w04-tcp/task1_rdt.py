@@ -53,41 +53,75 @@ class UnreliableChannel:
 
 
 class Sender:
-    """Your sender.
+    """Selective repeat: a window of packets in flight, each ACKed on its own.
 
-    Requirements are in task1.md. The short version:
-
-      - break `data` into PAYLOAD-sized pieces and number them
-      - retransmit what is not acknowledged
-      - do not assume an ACK means what you think it means until you have
-        checked the number on it
-
-    You choose the protocol: stop-and-wait is the easiest to get right and the
-    slowest; a sliding window is the point of §3.4.3. Say which you chose and
-    why in observation.md.
+    Packets are ("D", seq, payload). ACKs are ("A", seq) and name the one
+    packet they confirm, so a duplicate or stale ACK can only ever mark a
+    packet that really was received - it can never skip one.
     """
 
+    WINDOW = 8          # packets allowed in flight
+    TIMEOUT = 40        # steps to wait for an ACK before sending again
+
     def __init__(self, data_channel, ack_channel, data):
-        raise NotImplementedError("write your sender")
+        self.up, self.down = data_channel, ack_channel
+        self.chunks = [data[i:i + PAYLOAD] for i in range(0, len(data), PAYLOAD)]
+        self.acked = set()          # seqs the receiver has confirmed
+        self.sent_at = {}           # seq -> step it was last sent, if unacked
+        self.base = 0               # lowest seq not yet acked
+        self.next_seq = 0           # next seq never sent
+        self.now = 0
 
     def step(self):
-        """Do one unit of work. Return False when you believe you are done."""
-        raise NotImplementedError
+        self.now += 1
+
+        # 1) read at most one ACK, and only trust the number written on it
+        pkt = self.down.receive()
+        if pkt is not None and pkt[0] == "A" and pkt[1] < len(self.chunks):
+            self.acked.add(pkt[1])
+            self.sent_at.pop(pkt[1], None)
+        while self.base in self.acked:
+            self.base += 1
+
+        if self.base >= len(self.chunks):
+            return False            # everything confirmed
+
+        # 2) send one packet: the oldest timed-out one, else a new one
+        late = [s for s, t in self.sent_at.items() if self.now - t >= self.TIMEOUT]
+        if late:
+            seq = min(late)
+        elif self.next_seq < len(self.chunks) and self.next_seq < self.base + self.WINDOW:
+            seq = self.next_seq
+            self.next_seq += 1
+        else:
+            return True
+        self.up.send(("D", seq, self.chunks[seq]))
+        self.sent_at[seq] = self.now
+        return True
 
 
 class Receiver:
-    """Your receiver. Hands back the reassembled bytes via `.data()`."""
+    """Keeps every packet by sequence number and ACKs each one it sees."""
 
     def __init__(self, data_channel, ack_channel):
-        raise NotImplementedError("write your receiver")
+        self.up, self.down = data_channel, ack_channel
+        self.got = {}               # seq -> payload; a duplicate just overwrites itself
 
     def step(self):
-        raise NotImplementedError
+        pkt = self.up.receive()
+        if pkt is None or pkt[0] != "D":
+            return
+        _, seq, payload = pkt
+        self.got[seq] = payload
+        self.down.send(("A", seq))  # ACK duplicates too: the first ACK may have been lost
 
     def data(self):
-        """The bytes reassembled so far."""
-        raise NotImplementedError
-
+        """Only the contiguous prefix: bytes in order with no hole before them."""
+        out, seq = [], 0
+        while seq in self.got:
+            out.append(self.got[seq])
+            seq += 1
+        return b"".join(out)
 
 # ------------------------------------------------------------------- harness
 def verify(seed=246, size=2000, max_steps=200_000):

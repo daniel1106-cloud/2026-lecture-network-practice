@@ -37,28 +37,34 @@ class FixedWindow:
     def on_loss(self):
         pass
 
-
 class YourControl:
-    """Your congestion control.
+    """Slow start, then additive increase / gentle multiplicative decrease.
 
-    Things worth knowing before you start:
-
-    * The link drains one packet per slot and the round trip is 20 slots, so
-      the pipe holds about 20 packets. Above that you are only filling a queue.
-    * The queue is 10 packets deep and drops from the tail. Filling it does not
-      make you faster - it makes you slower, and everybody behind you too.
-    * Cutting hard on every loss costs you throughput. Not cutting costs you
-      correctness. §3.7 is the argument about where between those to sit.
-    * You are allowed to grow differently before and after your first loss.
-      That distinction has a name in the textbook.
+    - slow start: +1 per ACK (window doubles every round trip) until the first loss
+    - congestion avoidance: +1/window per ACK (about +1 packet per round trip)
+    - on a loss: ssthresh = window * BETA, and the window drops to it, not to 1
+    - one drop of a full queue makes many packets time out together; they are
+      one congestion event, so losses are ignored until a window of ACKs has passed
     """
 
+    BETA = 0.7
+
     def __init__(self):
-        self.window = 1
-        raise NotImplementedError("write your congestion control")
+        self.window = 1.0
+        self.ssthresh = float("inf")
+        self.ignore_losses = 0
 
     def on_ack(self):
-        raise NotImplementedError
+        if self.ignore_losses > 0:
+            self.ignore_losses -= 1
+        if self.window < self.ssthresh:
+            self.window += 1
+        else:
+            self.window += 1 / self.window
 
     def on_loss(self):
-        raise NotImplementedError
+        if self.ignore_losses > 0:
+            return
+        self.ssthresh = max(2.0, self.window * self.BETA)
+        self.window = self.ssthresh
+        self.ignore_losses = int(self.window) + 5
