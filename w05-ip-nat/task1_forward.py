@@ -16,42 +16,93 @@ exactly the thing you are supposed to understand this week.
 import argparse
 
 
+def _ip_to_int(text):
+    """'163.152.6.10' -> 32-bit int, using shifts only."""
+    parts = text.strip().split(".")
+    if len(parts) != 4:
+        raise ValueError(f"not a dotted-quad address: {text!r}")
+    value = 0
+    for part in parts:
+        if not part.isdigit() or not 0 <= int(part) <= 255:
+            raise ValueError(f"bad octet {part!r} in {text!r}")
+        value = (value << 8) | int(part)
+    return value
+
+
+def _int_to_ip(value):
+    return ".".join(str((value >> shift) & 0xFF) for shift in (24, 16, 8, 0))
+
+
+def _mask(prefix_len):
+    return (0xFFFFFFFF << (32 - prefix_len)) & 0xFFFFFFFF
+
+
 def parse_cidr(cidr):
     """'163.152.6.0/24' -> (network as int, prefix length).
 
-    Requirements: reject a prefix length outside 0-32, and reject an address
-    whose host bits are set when they should not be (163.152.6.5/24 is a
-    common way to write a host, but it is not a network).
+    Rejects a prefix length outside 0-32, and an address whose host bits are
+    set (163.152.6.5/24 is a host written in network notation, not a network).
     """
-    raise NotImplementedError("parse a CIDR block")
+    address, slash, length = cidr.strip().partition("/")
+    if not slash or not length.isdigit():
+        raise ValueError(f"not CIDR notation: {cidr!r}")
+    prefix_len = int(length)
+    if not 0 <= prefix_len <= 32:
+        raise ValueError(f"prefix length {prefix_len} is outside 0-32")
+    network = _ip_to_int(address)
+    if network & ~_mask(prefix_len) & 0xFFFFFFFF:
+        raise ValueError(f"{cidr!r} has host bits set")
+    return network, prefix_len
 
 
 def network_range(cidr):
     """'163.152.6.0/24' -> (first usable, last usable, broadcast) as strings.
 
-    Careful at the edges. /31 and /32 do not have a usable host range in the
-    ordinary sense - decide what you return and say so in observation.md.
+    Edge cases (RFC 3021): a /31 is a point-to-point link where both addresses
+    are hosts, so first = network, last = network + 1 and there is no
+    broadcast (None). A /32 is a single host: first = last = that address,
+    broadcast None.
     """
-    raise NotImplementedError("compute the range")
+    network, prefix_len = parse_cidr(cidr)
+    last_address = network | (~_mask(prefix_len) & 0xFFFFFFFF)
+    if prefix_len == 32:
+        return (_int_to_ip(network), _int_to_ip(network), None)
+    if prefix_len == 31:
+        return (_int_to_ip(network), _int_to_ip(last_address), None)
+    return (_int_to_ip(network + 1), _int_to_ip(last_address - 1),
+            _int_to_ip(last_address))
 
 
 class ForwardingTable:
     """Longest-prefix-match forwarding.
 
-    add(cidr, next_hop)  ·  lookup(address) -> next_hop or None
+    Routes are grouped by prefix length; a lookup tries the longest length
+    first and stops at the first hit, so 0.0.0.0/0 (length 0) is only reached
+    when nothing longer matched.
 
-    The default route 0.0.0.0/0 matches everything and is the shortest prefix,
-    so it must lose to any other match. If two entries have the same prefix
-    length, the table is malformed - say what you do.
+    Two entries with the same network and prefix length are a malformed
+    table: the same next hop twice is ignored, a different next hop raises
+    ValueError rather than silently picking one.
     """
 
+    def __init__(self):
+        self.by_length = {}                 # prefix length -> {network: next hop}
+
     def add(self, cidr, next_hop):
-        raise NotImplementedError
+        network, prefix_len = parse_cidr(cidr)
+        routes = self.by_length.setdefault(prefix_len, {})
+        if network in routes and routes[network] != next_hop:
+            raise ValueError(f"{cidr} already routes to {routes[network]}, "
+                             f"cannot also route to {next_hop}")
+        routes[network] = next_hop
 
     def lookup(self, address):
-        raise NotImplementedError
-
-
+        value = _ip_to_int(address)
+        for prefix_len in sorted(self.by_length, reverse=True):
+            hop = self.by_length[prefix_len].get(value & _mask(prefix_len))
+            if hop is not None:
+                return hop
+        return None
 # ------------------------------------------------------------------- harness
 RANGE_CASES = [
     ("192.168.0.0/24",  "192.168.0.1",   "192.168.0.254",  "192.168.0.255"),

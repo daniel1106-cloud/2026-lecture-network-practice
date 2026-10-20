@@ -38,27 +38,33 @@ class LinearTable:
 
 
 class YourTable:
-    """Your table. Same three methods, same answers, fewer comparisons.
+    """Routes grouped by prefix length, longest length tried first.
 
-    Addresses and networks are plain 32-bit ints here - no strings, no parsing,
-    so that the benchmark measures your lookup and nothing else.
+    There are at most 33 prefix lengths, and a real table uses a handful (this
+    benchmark uses 7). For each length I keep a dict {network: next_hop}.
+    A lookup masks the address with each length's mask, longest first, and
+    stops at the first dict hit - which is by definition the longest match.
+    The default route is length 0, so it is only reached when everything
+    longer missed.
 
-    Two directions worth knowing about before you pick one:
-
-      * group by prefix length. There are only 33 possible lengths, and you can
-        ask them in an order that lets you stop early.
-      * walk the address one bit at a time. Each bit takes you to at most one
-        child, so the work is bounded by the address width, not by the table size.
-
-    The second is what hardware does. The first is easier and often enough.
-    Say which you chose and what it cost you in memory.
+    Memory: one dict entry per route, plus one small tuple per length.
+    Time: at most one dict probe per distinct length, so it is bounded by the
+    number of lengths (<= 33), not by the number of routes.
     """
 
     def __init__(self):
-        raise NotImplementedError("write your table")
+        self.by_length = {}         # prefix length -> {network: next_hop}
+        self.steps = ()             # ((mask, dict), ...) longest length first
 
     def add(self, network, prefix_len, next_hop):
-        raise NotImplementedError
+        self.by_length.setdefault(prefix_len, {})[network] = next_hop
+        self.steps = tuple(
+            ((0xFFFFFFFF << (32 - length)) & 0xFFFFFFFF, self.by_length[length])
+            for length in sorted(self.by_length, reverse=True))
 
     def lookup(self, address):
-        raise NotImplementedError
+        for mask, routes in self.steps:
+            hop = routes.get(address & mask)
+            if hop is not None:
+                return hop
+        return None
