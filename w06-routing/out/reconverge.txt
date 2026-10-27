@@ -1,0 +1,32 @@
+Week 6 · Task 2 · measured OSPF reconvergence (3 FRR 9.1.0 routers in Docker, triangle r1-r2-r3, all link costs 10)
+
+OSPF timers on the broadcast links (show ip ospf interface eth0): Hello 10 s, Dead 40 s, Wait 40 s, Retransmit 5 s.
+The configs in topology/ set none of these, so they are FRR's defaults.
+
+How it was timed: a shell loop polls "show ip route ospf" on r1 and stops when the table (ignoring the age column)
+differs from the one before the event, or, for a recovery, equals the one before the event again. Polling every
+0.2-1 s plus about 0.3 s of docker-exec overhead, so every number below is good to about +/- 1 s.
+
+event                                                         measured
+------------------------------------------------------------  --------------------------------
+B4  interface down: ip link set eth1 down on r1               2 s   (scenario.sh cut, run twice, both 2 s)
+B4' silent failure: OSPF packets dropped on r1 eth1 with      39.6 s  (link stays UP; Dead interval is 40 s)
+    iptables (-p 89), interface never goes down
+B5  interface restored (ip link set eth1 up), table back      10.5 s, 6.9 s   (two runs)
+B5' silent failure removed (iptables rule deleted)            9.3 s
+C   no link goes down: ip ospf cost 10 -> 100 on r1 eth0     1.4 s  (r1 stops using the eth0 path to 172.20.0.0/16)
+
+Note on the interface name: scenario.sh says eth1 is "net_b (r1-r2)", but in this run Docker numbered the networks
+the other way round: on r1 eth1 is the link to r3 (neighbour 3.3.3.3, 172.19.0.0/16) and eth0 is the link to r2
+(neighbour 2.2.2.2, 172.21.0.0/16). The cut therefore removed the r1-r3 link. It does not change what is measured.
+
+Before the cut r1 reaches 172.20.0.0/16 (the r2-r3 network) by two equal-cost paths (cost 20, ECMP).
+After the cut it has only the path through r2, and 172.19.0.0/16 (the r1-r3 network, directly connected before)
+is now reached through r2 at cost 30. r2 and r3 each lost one of their two equal-cost paths as well.
+Full tables: route-before.txt and route-after.txt.
+
+Cost change, r1, before and after (show ip route ospf, 172.20/172.21 lines):
+  before   172.20.0.0/16 [110/20] via 172.19.0.2 eth1  AND via 172.21.0.2 eth0
+           172.21.0.0/16 [110/10] directly connected, eth0
+  after    172.20.0.0/16 [110/20] via 172.19.0.2 eth1          (the eth0 path is gone)
+           172.21.0.0/16 [110/30] via 172.19.0.2 eth1          (the directly connected net now goes round through r3)

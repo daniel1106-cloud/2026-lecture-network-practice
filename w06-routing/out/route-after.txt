@@ -1,0 +1,17 @@
+# Routing tables of r1, r2, r3 after r1 eth1 was taken down, taken 2026-10-27 16:25:53
+
+===== r1 =====
+O>* 172.19.0.0/16 [110/30] via 172.21.0.2, eth0, weight 1, 00:00:11
+O>* 172.20.0.0/16 [110/20] via 172.21.0.2, eth0, weight 1, 00:00:11
+O   172.21.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:00:35
+
+===== r2 =====
+O>* 172.19.0.0/16 [110/20] via 172.20.0.2, eth1, weight 1, 00:00:11
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:04:13
+O   172.21.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:04:13
+
+===== r3 =====
+O   172.19.0.0/16 [110/10] is directly connected, eth0, weight 1, 00:04:15
+O   172.20.0.0/16 [110/10] is directly connected, eth1, weight 1, 00:04:15
+O>* 172.21.0.0/16 [110/20] via 172.20.0.3, eth1, weight 1, 00:00:12
+

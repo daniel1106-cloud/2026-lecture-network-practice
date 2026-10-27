@@ -1,0 +1,225 @@
+﻿### tracert www.korea.ac.kr   (2026-10-27 15:26:44)
+
+Tracing route to www.korea.ac.kr [163.152.6.10]
+over a maximum of 30 hops:
+
+  1     4 ms     3 ms     2 ms  172.16.0.2 
+  2     4 ms     9 ms     2 ms  192.168.98.132 
+  3     6 ms     4 ms     3 ms  163.152.233.129 
+  4    11 ms    10 ms    10 ms  163.152.205.206 
+  5     *        *        *     Request timed out.
+  6     8 ms     8 ms    10 ms  163.152.4.140 
+  7    10 ms     8 ms     8 ms  163.152.4.150 
+  8     *        *        *     Request timed out.
+  9     *        *        *     Request timed out.
+ 10     *        *        *     Request timed out.
+ 11     *        *        *     Request timed out.
+ 12     *        *        *     Request timed out.
+ 13     *        *        *     Request timed out.
+ 14     *        *        *     Request timed out.
+ 15     *        *        *     Request timed out.
+ 16     *        *        *     Request timed out.
+ 17     *        *        *     Request timed out.
+ 18     *        *        *     Request timed out.
+ 19     *        *        *     Request timed out.
+ 20     *        *        *     Request timed out.
+ 21     *        *        *     Request timed out.
+ 22     *        *        *     Request timed out.
+ 23     *        *        *     Request timed out.
+ 24     *        *        *     Request timed out.
+ 25     *        *        *     Request timed out.
+ 26     *        *        *     Request timed out.
+ 27     *        *        *     Request timed out.
+ 28     *        *        *     Request timed out.
+ 29     *        *        *     Request timed out.
+ 30     *        *        *     Request timed out.
+
+Trace complete.
+### tracert www.stanford.edu   (2026-10-27 15:29:41)
+
+Tracing route to stanford.netlifyglobalcdn.com [3.33.186.135]
+over a maximum of 30 hops:
+
+  1     4 ms     2 ms     2 ms  172.16.0.2 
+  2     3 ms     3 ms     3 ms  192.168.98.132 
+  3     2 ms     3 ms     3 ms  163.152.233.129 
+  4     5 ms     5 ms     3 ms  175.121.235.141 
+  5    12 ms     3 ms     2 ms  10.103.0.142 
+  6     6 ms     6 ms     6 ms  10.222.25.120 
+  7     6 ms     5 ms     6 ms  10.222.15.205 
+  8     *        *        *     Request timed out.
+  9     *        *        *     Request timed out.
+ 10     *        *        *     Request timed out.
+ 11     *        *        *     Request timed out.
+ 12     *        *        *     Request timed out.
+ 13     *        *        *     Request timed out.
+ 14     *        *        *     Request timed out.
+ 15     *        *        *     Request timed out.
+ 16     *        *        *     Request timed out.
+ 17     *        *        *     Request timed out.
+ 18     *        *        *     Request timed out.
+ 19     *        *        *     Request timed out.
+ 20     *        *        *     Request timed out.
+ 21     *        *        *     Request timed out.
+ 22     *        *        *     Request timed out.
+ 23     *        *        *     Request timed out.
+ 24     *        *        *     Request timed out.
+ 25     *        *        *     Request timed out.
+ 26     *        *        *     Request timed out.
+ 27     *        *        *     Request timed out.
+ 28     *        *        *     Request timed out.
+ 29     *        *        *     Request timed out.
+ 30     *        *        *     Request timed out.
+
+Trace complete.
+### tracert 1.1.1.1   (2026-10-27 15:32:38)
+
+Tracing route to one.one.one.one [1.1.1.1]
+over a maximum of 30 hops:
+
+  1     2 ms     2 ms     2 ms  172.16.0.2 
+  2     4 ms     3 ms     5 ms  192.168.98.132 
+  3     5 ms     2 ms     2 ms  163.152.233.129 
+  4     5 ms     4 ms     4 ms  175.121.235.141 
+  5     4 ms     5 ms     6 ms  10.103.0.142 
+  6     7 ms     5 ms     6 ms  10.222.25.120 
+  7    11 ms     8 ms     7 ms  10.222.16.67 
+  8     6 ms     4 ms     7 ms  39.120.253.58 
+  9     7 ms     6 ms     5 ms  211.45.68.69 
+ 10     8 ms     7 ms     7 ms  211.45.68.70 
+ 11    10 ms     7 ms     6 ms  211.56.189.126 
+ 12     8 ms     9 ms     7 ms  141.101.82.19 
+ 13     *        *        *     Request timed out.
+ 14     *        *        *     Request timed out.
+ 15     *        *        *     Request timed out.
+ 16     *        *        *     Request timed out.
+ 17     *        *        *     Request timed out.
+ 18     *        *        *     Request timed out.
+ 19     *        *        *     Request timed out.
+ 20     *        *        *     Request timed out.
+ 21     *        *        *     Request timed out.
+ 22     *        *        *     Request timed out.
+ 23     *        *        *     Request timed out.
+ 24     *        *        *     Request timed out.
+ 25     *        *        *     Request timed out.
+ 26     *        *        *     Request timed out.
+ 27     *        *        *     Request timed out.
+ 28     *        *        *     Request timed out.
+ 29     *        *        *     Request timed out.
+ 30     *        *        *     Request timed out.
+
+Trace complete.
+### [phone hotspot, mobile network] tracert www.stanford.edu   (2026-10-27 16:32:42)
+
+Tracing route to stanford.netlifyglobalcdn.com [15.197.167.90]
+over a maximum of 30 hops:
+
+  1     2 ms     2 ms     2 ms  10.209.134.18 
+  2     *        *        *     Request timed out.
+  3    20 ms    13 ms    21 ms  10.2.210.234 
+  4    32 ms    16 ms    26 ms  10.2.240.34 
+  5    64 ms    36 ms    27 ms  10.2.240.41 
+  6    52 ms    13 ms    35 ms  10.2.197.14 
+  7    34 ms    22 ms    19 ms  10.2.197.91 
+  8    59 ms    22 ms    38 ms  10.2.197.83 
+  9   300 ms    23 ms    25 ms  123.140.6.21 
+ 10    63 ms    44 ms    42 ms  1.208.115.161 
+ 11     *        *        *     Request timed out.
+ 12     *        *        *     Request timed out.
+ 13     *        *        *     Request timed out.
+ 14     *        *        *     Request timed out.
+ 15     *        *        *     Request timed out.
+ 16     *        *        *     Request timed out.
+ 17     *        *        *     Request timed out.
+ 18    33 ms    29 ms    24 ms  afa7f374f51cc8991.awsglobalaccelerator.com [15.197.167.90] 
+
+Trace complete.
+### [phone hotspot, mobile network] tracert www.korea.ac.kr   (2026-10-27 16:34:26)
+
+Tracing route to www.korea.ac.kr [163.152.6.10]
+over a maximum of 30 hops:
+
+  1     2 ms     3 ms    14 ms  10.209.134.18 
+  2     *        *        *     Request timed out.
+  3    24 ms    20 ms    19 ms  10.2.210.250 
+  4    21 ms    17 ms    21 ms  10.2.240.6 
+  5    20 ms    19 ms    19 ms  10.2.240.5 
+  6    21 ms    46 ms    24 ms  10.2.197.13 
+  7    33 ms    22 ms    18 ms  10.2.197.91 
+  8    43 ms    18 ms    24 ms  10.2.197.83 
+  9    65 ms    32 ms    31 ms  1.208.105.69 
+ 10    52 ms    27 ms    30 ms  124.111.70.34 
+ 11    38 ms    34 ms    28 ms  10.222.11.148 
+ 12    52 ms    25 ms    24 ms  10.222.38.75 
+ 13     *        *        *     Request timed out.
+ 14     *        *        *     Request timed out.
+ 15     *        *        *     Request timed out.
+ 16     *        *        *     Request timed out.
+ 17     *        *        *     Request timed out.
+ 18     *        *        *     Request timed out.
+ 19     *        *        *     Request timed out.
+ 20     *        *        *     Request timed out.
+ 21     *        *        *     Request timed out.
+ 22     *        *        *     Request timed out.
+ 23     *        *        *     Request timed out.
+ 24     *        *        *     Request timed out.
+ 25     *        *        *     Request timed out.
+ 26     *        *        *     Request timed out.
+ 27     *        *        *     Request timed out.
+ 28     *        *        *     Request timed out.
+ 29     *        *        *     Request timed out.
+ 30     *        *        *     Request timed out.
+
+Trace complete.
+### [phone hotspot, mobile network] tracert 1.1.1.1   (2026-10-27 16:37:22)
+
+Tracing route to one.one.one.one [1.1.1.1]
+over a maximum of 30 hops:
+
+  1    10 ms     3 ms     1 ms  10.209.134.18 
+  2     *        *        *     Request timed out.
+  3    49 ms    27 ms    15 ms  10.2.210.226 
+  4    49 ms    22 ms    24 ms  10.2.240.6 
+  5    65 ms    29 ms    14 ms  10.2.240.5 
+  6    43 ms    18 ms    25 ms  10.2.197.13 
+  7    32 ms    22 ms    19 ms  10.2.197.91 
+  8    28 ms    40 ms    23 ms  10.2.197.83 
+  9    41 ms    40 ms    28 ms  1.208.178.197 
+ 10     *       29 ms    22 ms  1.213.104.41 
+ 11    30 ms    18 ms    18 ms  100.68.8.54 
+ 12    19 ms    29 ms    36 ms  100.68.84.126 
+ 13    24 ms    29 ms    30 ms  100.68.89.122 
+ 14    42 ms    34 ms    24 ms  211.234.118.42 
+ 15    52 ms    34 ms     *     203.246.162.165 
+ 16     *        *       33 ms  121.78.30.70 
+ 17    21 ms    25 ms    19 ms  141.101.82.19 
+ 18    33 ms    25 ms    33 ms  one.one.one.one [1.1.1.1] 
+
+Trace complete.
+### [phone hotspot, mobile network] tracert www.cs.cmu.edu   (overseas target that really is in the US; 2026-10-27 16:46:04)
+
+Tracing route to SCS-WEB-LB.ANDREW.cmu.edu [128.2.42.95]
+over a maximum of 20 hops:
+
+  1    22 ms    29 ms     4 ms  10.209.134.18 
+  2     *        *        *     Request timed out.
+  3    35 ms    25 ms    19 ms  10.2.210.202 
+  4    32 ms    32 ms    20 ms  10.2.240.46 
+  5    38 ms    19 ms    34 ms  10.2.240.37 
+  6    25 ms    21 ms    21 ms  10.2.197.13 
+  7    21 ms    19 ms    19 ms  10.2.197.91 
+  8    41 ms    24 ms    25 ms  10.2.197.83 
+  9    42 ms    25 ms    40 ms  118.130.15.61 
+ 10    34 ms    35 ms    60 ms  1.208.107.25 
+ 11   405 ms   151 ms   160 ms  1.208.148.98 
+ 12   372 ms   153 ms   165 ms  1.208.115.254 
+ 13   181 ms   160 ms   169 ms  198.32.176.128 
+ 14   273 ms   240 ms   409 ms  fourhundredge-0-0-0-3.4079.core2.sunn.net.internet2.edu [163.253.2.47] 
+ 15   233 ms   452 ms   303 ms  fourhundredge-0-0-0-1.4079.core2.sacr.net.internet2.edu [163.253.1.190] 
+ 16   233 ms   261 ms   227 ms  fourhundredge-0-0-0-1.4079.core2.salt.net.internet2.edu [163.253.1.187] 
+ 17   310 ms   273 ms   212 ms  fourhundredge-0-0-0-0.4079.core2.denv.net.internet2.edu [163.253.1.168] 
+ 18   240 ms   434 ms   293 ms  fourhundredge-0-0-0-0.4079.core2.kans.net.internet2.edu [163.253.1.251] 
+ 19   231 ms   233 ms   215 ms  fourhundredge-0-0-0-0.4079.core1.chic.net.internet2.edu [163.253.2.28] 
+ 20   233 ms   472 ms   317 ms  fourhundredge-0-0-0-12.4079.core1.eqch.net.internet2.edu [163.253.2.73] 
+
+Trace complete.

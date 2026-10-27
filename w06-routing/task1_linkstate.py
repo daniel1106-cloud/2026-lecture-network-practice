@@ -13,7 +13,7 @@ in the packet. Build it.
 
     python3 task1_linkstate.py --verify
 """
-import argparse
+import argparse, heapq
 
 # Undirected weighted graph: node -> {neighbour: cost}
 TOPOLOGY = {
@@ -29,26 +29,52 @@ TOPOLOGY = {
 def dijkstra(graph, source):
     """Shortest path cost from `source` to every node.
 
-    Return {node: cost}. Unreachable nodes must not appear.
-
-    You write the loop. `heapq` is allowed; `networkx` is not.
+    Return {node: cost}. Unreachable nodes do not appear, and neither does
+    `source` itself (its cost to itself is 0 and carries no information).
     """
-    raise NotImplementedError("implement Dijkstra")
+    cost = {}
+    heap = [(0, source)]
+    while heap:
+        c, node = heapq.heappop(heap)
+        if node in cost:                      # an older, longer entry for a settled node
+            continue
+        cost[node] = c
+        for neighbour, weight in graph[node].items():
+            if neighbour not in cost:
+                heapq.heappush(heap, (c + weight, neighbour))
+    del cost[source]
+    return cost
 
 
 def forwarding_table(graph, source):
-    """What the router at `source` actually installs.
+    """What the router at `source` actually installs: {destination: first_hop}.
 
-    Return {destination: first_hop}, where first_hop is a **direct neighbour**
-    of `source` - the one interface a packet for that destination leaves by.
+    The first hop is carried along the search instead of reconstructing a path
+    afterwards: a neighbour of `source` starts with itself as the first hop, and
+    every node reached through a settled node inherits that node's first hop.
 
-    The source itself is not in the table. Neither are unreachable nodes.
-
-    The trap: it is easy to compute the full path and then take path[1]. That
-    works, but think about what a router does when two shortest paths tie, and
-    pick a rule. Say which in observation.md.
+    Tie-breaking: when two shortest paths have equal cost, the heap entries
+    compare (cost, node, first_hop), so the lexicographically smallest first
+    hop is settled first and wins. A real router would keep both (equal-cost
+    multipath) and spread flows across them by hashing the packet's addresses
+    and ports; one fixed choice pins all traffic to one path.
     """
-    raise NotImplementedError("implement the forwarding table")
+    table = {}
+    settled = set()
+    heap = [(0, source, None)]
+    while heap:
+        c, node, first_hop = heapq.heappop(heap)
+        if node in settled:
+            continue
+        settled.add(node)
+        if node != source:
+            table[node] = first_hop
+        for neighbour, weight in graph[node].items():
+            if neighbour not in settled:
+                hop = neighbour if node == source else first_hop
+                heapq.heappush(heap, (c + weight, neighbour, hop))
+    return table
+
 
 
 def link_down(graph, a, b):
